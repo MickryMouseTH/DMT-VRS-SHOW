@@ -14,26 +14,17 @@ from urllib.parse import quote
 
 # ----------------------- Configuration Values -----------------------
 Program_Name = "VRS_Show"      # Program name for identification and logging.
-Program_Version = "1.0"      # Program version used for file naming and logging.
+Program_Version = "1.1"      # Program version used for file naming and logging.
 # ---------------------------------------------------------------------
 
 LOCK_FILE = f"{Program_Name}.lock" # Define the lock file name
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
-def Load_Config():
+def Load_Config(Program_Name,script_dir):
     # Always use config.json in the same folder as this script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(script_dir, 'config.json')
-
-    logger.remove()
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
-
-    log_file_name = f'{Program_Name}_{Program_Version}.log'
-    log_file = os.path.join(log_dir, log_file_name)
-    logger.add(
-        log_file,
-        format="{time} | {level} | {thread.id} | {function} | {message}"
-    )
 
     # If the config file doesn't exist, create it with default values.
     if not os.path.exists(config_path):
@@ -73,13 +64,14 @@ def Load_Config():
 # ---------------------------------------------------------------------
 # Set up logging configuration using Loguru with rotating file handler.
 # ---------------------------------------------------------------------
-def Loguru_Logging(config):
+def Loguru_Logging(config,script_dir):
+
     logger.remove()
     log_Backup = int(config['log_Backup'])
     Log_Size = config['Log_Size']
     log_Level = config['log_Level']
 
-    log_dir = "logs"
+    log_dir = os.path.join(script_dir, 'logs')
     os.makedirs(log_dir, exist_ok=True)
 
     log_file_name = f'{Program_Name}_{Program_Version}.log'
@@ -442,8 +434,8 @@ window_name = f'{Program_Name} Version {Program_Version}'
 
 if __name__ == "__main__":
     try:
-        config = Load_Config()
-        Loguru_Logging(config)
+        config = Load_Config(Program_Name,script_dir)
+        Loguru_Logging(config,script_dir)
         logger.info(f"================ Program {Program_Name} Version {Program_Version} Start ================")
 
         handle_singleton_lock()

@@ -14,15 +14,22 @@ from urllib.parse import quote
 
 # ----------------------- Configuration Values -----------------------
 Program_Name = "VRS_Show"      # Program name for identification and logging.
-Program_Version = "1.1"      # Program version used for file naming and logging.
+Program_Version = "1.3"      # Program version used for file naming and logging.
 # ---------------------------------------------------------------------
 
-LOCK_FILE = f"{Program_Name}.lock" # Define the lock file name
-script_dir = os.path.dirname(os.path.abspath(__file__))
+
+if getattr(sys, 'frozen', False):
+    script_dir = os.path.dirname(sys.executable)
+else:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Define the lock file name in script_dir (must be after script_dir is defined)
+LOCK_FILE = os.path.join(script_dir, f"{Program_Name}.lock")
 
 def Load_Config(Program_Name,script_dir):
     # Always use config.json in the same folder as this script
-    config_path = os.path.join(script_dir, 'config.json')
+    config_file_name = f'{Program_Name}_config.json'
+    config_path = os.path.join(script_dir, config_file_name)
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
 
@@ -156,7 +163,7 @@ def connect_stream(rtsp_url):
         logger.error(f"Thread: An exception occurred during connection: {thread_error}")
         is_connected = False
 
-def Get_DC_Nvr(config):
+def Get_DC_Nvr(config, script_dir):
     logger.info("🔄 Switching to DC NVR...")
     if len(sys.argv) <= 2:
         logger.error("No arguments provided for DC NVR.")
@@ -189,7 +196,7 @@ def Get_DC_Nvr(config):
     logger.info("Main: Entering loading screen loop while waiting for connection.")
 
     spinner_angle = 0
-    font_path = 'THSarabun.ttf'
+    font_path = os.path.join(script_dir, 'THSarabun.ttf')
 
     while not is_connected and connection_thread.is_alive():
         loading_frame = np.zeros((480, 640, 3), dtype=np.uint8)
@@ -273,7 +280,7 @@ def Get_DC_Nvr(config):
     logger.info("================ Program End ==================")
 
 
-def Get_Plaza_Nvr(config):
+def Get_Plaza_Nvr(config, script_dir):
     parser = argparse.ArgumentParser(description="NVR Playback Tool")
     parser.add_argument("plaza", help="Plaza name (e.g., DM35)")
     parser.add_argument("time", help="Start time 'DDMMYYYYHHMMSS'")
@@ -320,7 +327,7 @@ def Get_Plaza_Nvr(config):
     connection_thread.start()
 
     logger.info("Displaying loading screen... waiting for connection.")
-    font_path = 'THSarabun.ttf'
+    font_path = os.path.join(script_dir, 'THSarabun.ttf')
     timeout_seconds = 5.0
     start_time = datetime.now()
     
@@ -440,10 +447,11 @@ if __name__ == "__main__":
 
         handle_singleton_lock()
         
-        plaza_success = Get_Plaza_Nvr(config)
+
+        plaza_success = Get_Plaza_Nvr(config, script_dir)
         
         if not plaza_success:
-            Get_DC_Nvr(config)
+            Get_DC_Nvr(config, script_dir)
 
     except Exception as e:
         logger.error(f"Main Program Error : {e}")

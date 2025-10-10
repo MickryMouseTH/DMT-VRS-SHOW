@@ -5,6 +5,7 @@ from loguru import logger
 import cv2 as cv
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from LogLibrary import Load_Config, Loguru_Logging
 import os
 import json
 import time
@@ -26,82 +27,31 @@ else:
 # Define the lock file name in script_dir (must be after script_dir is defined)
 LOCK_FILE = os.path.join(script_dir, f"{Program_Name}.lock")
 
-def Load_Config(Program_Name,script_dir):
-    # Always use config.json in the same folder as this script
-    config_file_name = f'{Program_Name}_config.json'
-    config_path = os.path.join(script_dir, config_file_name)
-    log_dir = "logs"
-    os.makedirs(log_dir, exist_ok=True)
 
-    # If the config file doesn't exist, create it with default values.
-    if not os.path.exists(config_path):
-        default_config = {
-            "plaza_nvr_ip":"",
-            "plaza_nvr_user":"",
-            "plaza_nvr_password":"",
-            "plaza_to_channel": {
-                "DM35": 1,
-                "DM36": 2,
-                "TB21": 21,
-                "TB22": 22
-            },
-            "dc_nvr_ip": "",
-            "lane_to_uid": {
-                "AN01": "a1b2c3d4-e5f6-...",
-                "AN02": "b2c3d4e5-f6a7-...",
-                "TC01": "c3d4e5f6-a7b8-..."
-            },
-            "log_Level": "DEBUG",
-            "Log_Console": 1,      # Set to "true" to enable console logging.
-            "log_Backup": 90,      # Log retention duration (number of backup files).
-            "Log_Size": "10 MB"    # Maximum log file size before rotation.
-        }
-        with open(config_path, 'w') as new_config_file:
-            json.dump(default_config, new_config_file, indent=4)
+default_config = {
+    "plaza_nvr_ip":"",
+    "plaza_nvr_user":"",
+    "plaza_nvr_password":"",
+    "plaza_to_channel": {
+        "DM35": 1,
+        "DM36": 2,
+        "TB21": 21,
+        "TB22": 22
+    },
+    "dc_nvr_ip": "",
+    "lane_to_uid": {
+        "AN01": "a1b2c3d4-e5f6-...",
+        "AN02": "b2c3d4e5-f6a7-...",
+        "TC01": "c3d4e5f6-a7b8-..."
+    },
+    "log_Level": "DEBUG",
+    "Log_Console": 1,      # Set to "true" to enable console logging.
+    "log_Backup": 90,      # Log retention duration (number of backup files).
+    "Log_Size": "10 MB"    # Maximum log file size before rotation.
+}
 
-    # Load the configuration from the JSON file.
-    try:
-        with open(config_path, 'r') as config_file:
-            config = json.load(config_file)
-    except Exception as e:
-        logger.error(f'Load Config Error {e}')
-        config = {}
-    return config
-
-# ---------------------------------------------------------------------
-# Set up logging configuration using Loguru with rotating file handler.
-# ---------------------------------------------------------------------
-def Loguru_Logging(config,script_dir):
-
-    logger.remove()
-    log_Backup = int(config['log_Backup'])
-    Log_Size = config['Log_Size']
-    log_Level = config['log_Level']
-
-    log_dir = os.path.join(script_dir, 'logs')
-    os.makedirs(log_dir, exist_ok=True)
-
-    log_file_name = f'{Program_Name}_{Program_Version}.log'
-    log_file = os.path.join(log_dir, log_file_name)
-
-    if int(config['Log_Console']) == 1:
-        logger.add(
-            sys.stdout, 
-            level=log_Level, 
-            format="<green>{time}</green> | <blue>{level}</blue> | <cyan>{thread.id}</cyan> | <magenta>{function}</magenta> | {message}",
-            enqueue=True
-        )
-
-    logger.add(
-        log_file,
-        format="{time} | {level} | {thread.id} | {function} | {message}",
-        level=log_Level,
-        rotation=Log_Size,
-        retention=log_Backup,
-        compression="zip",
-        enqueue=True
-    )
-
+config = Load_Config(default_config, Program_Name)
+logger = Loguru_Logging(config, Program_Name, Program_Version)
 
 def putText_Thai(image, text, position, font_path, font_size, color):
     """

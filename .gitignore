@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual env
+.venv/
+venv/
+env/
+ENV/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# App config (contains NVR credentials — keep local only; auto-created on first run)
+VRS_Show_config.json
+_config.json
+*_config.json
+
+# Runtime artifacts
+logs/
+*.log
+*.lock
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
